@@ -12,6 +12,8 @@ export async function POST(request: any, response: any) {
     const buffer = Buffer.from(bytes);
     await fs.writeFile("video.mp4", buffer);
 
+    const aspectRatio = await formData.get("aspectRatio");
+
     const originalname = await formData.get("name");
     const folderName = `./files/videos/${originalname}`;
 
@@ -23,7 +25,7 @@ export async function POST(request: any, response: any) {
       // If directory doesn't exist, create it
       await fs.mkdir(folderName);
       await copyFileAsync("playlist.m3u8", `${folderName}/playlist.m3u8`);
-      await execFFmpeg(folderName);
+      await execFFmpeg(folderName, aspectRatio);
 
       console.log(formData.get("type"));
 
@@ -53,28 +55,49 @@ async function copyFileAsync(source: any, destination: any) {
   }
 }
 
-async function execFFmpeg(folderName: any) {
-  const resolutions = [
-    { resolution: "144p", bitrate: "250k" },
-    { resolution: "240p", bitrate: "500k" },
-    { resolution: "360p", bitrate: "800k" },
-    { resolution: "480p", bitrate: "1400k" },
-    { resolution: "720p", bitrate: "2800k" },
-    { resolution: "1080p", bitrate: "5000k" },
-  ];
+async function execFFmpeg(folderName: any, aspectRatio: any) {
+  if (aspectRatio === "16:9") {
+    const resolutions = [
+      { resolution: "144p", bitrate: "250k" },
+      { resolution: "240p", bitrate: "500k" },
+      { resolution: "360p", bitrate: "800k" },
+      { resolution: "480p", bitrate: "1400k" },
+      { resolution: "720p", bitrate: "2800k" },
+      { resolution: "1080p", bitrate: "5000k" },
+    ];
 
-  for (const { resolution, bitrate } of resolutions) {
-    const command = `ffmpeg -hide_banner -y -i video.mp4 -vf scale=w=${getResolutionWidth(
-      resolution
-    )}:h=${getResolutionHeight(
-      resolution
-    )}:force_original_aspect_ratio=decrease -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -hls_playlist_type vod -b:v ${bitrate} -maxrate ${getMaxRate(
-      bitrate
-    )} -bufsize ${getBufferSize(
-      bitrate
-    )} -b:a 96k -hls_segment_filename ${folderName}/${resolution}_%03d.ts ${folderName}/${resolution}.m3u8`;
+    for (const { resolution, bitrate } of resolutions) {
+      const command = `ffmpeg -hide_banner -y -i video.mp4 -vf scale=w=${getResolutionWidth(
+        resolution
+      )}:h=${getResolutionHeight(
+        resolution
+      )}:force_original_aspect_ratio=decrease -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -hls_playlist_type vod -b:v ${bitrate} -maxrate ${getMaxRate(
+        bitrate
+      )} -bufsize ${getBufferSize(
+        bitrate
+      )} -b:a 96k -hls_segment_filename ${folderName}/${resolution}_%03d.ts ${folderName}/${resolution}.m3u8`;
 
-    await executeCommand(command, bitrate);
+      await executeCommand(command, bitrate);
+    }
+  } else {
+    const resolutions = [
+      { resolution: "144p", width: 552, height: 916, bitrate: "250k" },
+      { resolution: "240p", width: 552, height: 916, bitrate: "500k" },
+      { resolution: "360p", width: 552, height: 916, bitrate: "800k" },
+      { resolution: "480p", width: 552, height: 916, bitrate: "1400k" },
+      { resolution: "720p", width: 552, height: 916, bitrate: "2800k" },
+      { resolution: "1080p", width: 552, height: 916, bitrate: "5000k" },
+    ];
+
+    for (const { resolution, width, height, bitrate } of resolutions) {
+      const command = `ffmpeg -hide_banner -y -i video.mp4 -vf scale=w=${width}:h=${height} -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -hls_playlist_type vod -b:v ${bitrate} -maxrate ${getMaxRate(
+        bitrate
+      )} -bufsize ${getBufferSize(
+        bitrate
+      )} -b:a 96k -hls_segment_filename ${folderName}/${resolution}_%03d.ts ${folderName}/${resolution}.m3u8`;
+
+      await executeCommand(command, bitrate);
+    }
   }
 }
 

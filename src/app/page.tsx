@@ -13,6 +13,7 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const inputRef = useRef<any>(null);
   const [type, setType] = useState("download" as any);
+  const [aspectRatio, setAspectRatio] = useState("16:9");
 
   const handleVideos = async (e: any) => {
     console.log("yakhchi baba");
@@ -27,16 +28,16 @@ export default function Home() {
     setLoading(true);
     const formData = new FormData();
 
-    formData.append("file", video as any); // Add the video to formData
-    formData.append("name", folder); // Add the video to formData
-    formData.append("type", type); // Add the video to formData
+    formData.append("file", video as any);
+    formData.append("name", folder);
+    formData.append("type", type);
+    formData.append("aspectRatio", aspectRatio);
 
     fetch("/api/upload", {
       method: "POST",
       body: formData,
     }).then(async (res) => {
       const data = await res.json();
-      console.log(data);
       setLoading(false);
 
       if (data.error) {
@@ -56,7 +57,7 @@ export default function Home() {
 
   return (
     <main className="h-screen flex flex-col items-center justify-center ">
-      <div className="flex items-center justify-center gap-10 mb-10">
+      {/* <div className="flex items-center justify-center gap-10 mb-10">
         <button
           onClick={() => setType("download")}
           className="border p-2 px-6 rounded-lg bg-[#1d1d1d] transition-all duration-300 hover:scale-105"
@@ -79,11 +80,11 @@ export default function Home() {
         >
           JustStream
         </button>
-      </div>
+      </div> */}
 
       <div className="container bg-[#1d1d1d] max-h-[470px] h-full py-4 p-8 rounded-2xl border border-[#4e4e4e]">
         <div className="border-b justify-between py-2 flex items-center">
-          <h3 className="text-4xl"> NahalGasht Video Stream Uploader</h3>
+          <h3 className="text-4xl">Panafor Video Stream Uploader</h3>
           <span className="loaderSec h-[50px]"></span>
         </div>
 
@@ -99,9 +100,33 @@ export default function Home() {
                 placeholder="Upload Directory Name"
                 className="bg-transparent border-b border-[#4e4e4e] text-white w-full outline-none"
               />
+
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setAspectRatio("16:9")}
+                  className="border p-2 px-6 rounded-lg bg-[#1d1d1d] transition-all duration-300 hover:scale-105"
+                  style={{
+                    backgroundColor: aspectRatio === "16:9" ? "#ededed" : "#1d1d1d",
+                    color: aspectRatio === "16:9" ? "#000" : "#fff",
+                  }}
+                >
+                  16:9
+                </button>
+                <button
+                  onClick={() => setAspectRatio("9:16")}
+                  className="border p-2 px-6 rounded-lg bg-[#1d1d1d] transition-all duration-300 hover:scale-105"
+                  style={{
+                    backgroundColor: aspectRatio === "9:16" ? "#ededed" : "#1d1d1d",
+                    color: aspectRatio === "9:16" ? "#000" : "#fff",
+                  }}
+                >
+                  9:16
+                </button>
+              </div>
+
               <input name="file" type="file" onChange={handleVideos} ref={inputRef} hidden />
               <button
-                className="bg-[#ededed] text-black w-52 h-[48px] flex items-center gap-3 justify-center rounded-lg font-bold cursor-pointer hover:bg-[#e7e7e7d8] hover:text-black transition-all duration-200"
+                className="bg-[#ededed] text-sm text-black w-[300px] h-[48px] flex items-center gap-3 justify-center rounded-lg font-bold cursor-pointer hover:bg-[#e7e7e7d8] hover:text-black transition-all duration-200"
                 onClick={() => inputRef.current.click()}
                 disabled={!folder}
               >
