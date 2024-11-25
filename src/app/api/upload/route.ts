@@ -55,48 +55,54 @@ async function copyFileAsync(source: any, destination: any) {
   }
 }
 
-async function execFFmpeg(folderName: any, aspectRatio: any) {
+async function execFFmpeg(folderName, aspectRatio) {
   if (aspectRatio === "16:9") {
     const resolutions = [
-      { resolution: "144p", bitrate: "250k" },
-      { resolution: "240p", bitrate: "500k" },
-      { resolution: "360p", bitrate: "800k" },
-      { resolution: "480p", bitrate: "1400k" },
-      { resolution: "720p", bitrate: "2800k" },
-      { resolution: "1080p", bitrate: "5000k" },
-    ];
-
-    for (const { resolution, bitrate } of resolutions) {
-      const command = `ffmpeg -hide_banner -y -i video.mp4 -vf scale=w=${getResolutionWidth(
-        resolution
-      )}:h=${getResolutionHeight(
-        resolution
-      )}:force_original_aspect_ratio=decrease -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -hls_playlist_type vod -b:v ${bitrate} -maxrate ${getMaxRate(
-        bitrate
-      )} -bufsize ${getBufferSize(
-        bitrate
-      )} -b:a 96k -hls_segment_filename ${folderName}/${resolution}_%03d.ts ${folderName}/${resolution}.m3u8`;
-
-      await executeCommand(command, bitrate);
-    }
-  } else {
-    const resolutions = [
-      { resolution: "144p", width: 552, height: 916, bitrate: "250k" },
-      { resolution: "240p", width: 552, height: 916, bitrate: "500k" },
-      { resolution: "360p", width: 552, height: 916, bitrate: "800k" },
-      { resolution: "480p", width: 552, height: 916, bitrate: "1400k" },
-      { resolution: "720p", width: 552, height: 916, bitrate: "2800k" },
-      { resolution: "1080p", width: 552, height: 916, bitrate: "5000k" },
+      { resolution: "144p", width: 256, height: 144, bitrate: "250k" },
+      { resolution: "240p", width: 426, height: 240, bitrate: "500k" },
+      { resolution: "360p", width: 640, height: 360, bitrate: "800k" },
+      { resolution: "480p", width: 854, height: 480, bitrate: "1400k" },
+      { resolution: "720p", width: 1280, height: 720, bitrate: "2800k" },
+      { resolution: "1080p", width: 1920, height: 1080, bitrate: "5000k" },
     ];
 
     for (const { resolution, width, height, bitrate } of resolutions) {
-      const command = `ffmpeg -hide_banner -y -i video.mp4 -vf scale=w=${width}:h=${height} -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -sc_threshold 0 -g 48 -keyint_min 48 -hls_time 4 -hls_playlist_type vod -b:v ${bitrate} -maxrate ${getMaxRate(
-        bitrate
-      )} -bufsize ${getBufferSize(
-        bitrate
-      )} -b:a 96k -hls_segment_filename ${folderName}/${resolution}_%03d.ts ${folderName}/${resolution}.m3u8`;
+      const outputPath = `${folderName}/${resolution}`;
+      const command = `
+        ffmpeg -hide_banner -y -i video.mp4 -vf scale=w=${width}:h=${height} \
+        -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -preset medium \
+        -b:v ${bitrate} -maxrate ${Math.floor(parseInt(bitrate) * 1.1)}k \
+        -bufsize ${Math.floor(parseInt(bitrate) * 1.5)}k \
+        -hls_time 4 -hls_playlist_type vod -b:a 128k \
+        -hls_segment_filename ${outputPath}_%03d.ts ${outputPath}.m3u8
+      `;
 
-      await executeCommand(command, bitrate);
+      console.log(`Executing FFmpeg Command for ${resolution}:`, command);
+      await executeCommand(command.trim(), bitrate);
+    }
+  } else {
+    const resolutions = [
+      { resolution: "144p", width: 144, height: 256, bitrate: "250k" },
+      { resolution: "240p", width: 240, height: 426, bitrate: "500k" },
+      { resolution: "360p", width: 360, height: 640, bitrate: "800k" },
+      { resolution: "480p", width: 480, height: 854, bitrate: "1400k" },
+      { resolution: "720p", width: 720, height: 1280, bitrate: "2800k" },
+      { resolution: "1080p", width: 1080, height: 1920, bitrate: "5000k" },
+    ];
+
+    for (const { resolution, width, height, bitrate } of resolutions) {
+      const outputPath = `${folderName}/${resolution}`;
+      const command = `
+        ffmpeg -hide_banner -y -i video.mp4 -vf scale=w=${width}:h=${height} \
+        -c:a aac -ar 48000 -c:v h264 -profile:v main -crf 20 -preset medium \
+        -b:v ${bitrate} -maxrate ${Math.floor(parseInt(bitrate) * 1.1)}k \
+        -bufsize ${Math.floor(parseInt(bitrate) * 1.5)}k \
+        -hls_time 4 -hls_playlist_type vod -b:a 128k \
+        -hls_segment_filename ${outputPath}_%03d.ts ${outputPath}.m3u8
+      `;
+
+      console.log(`Executing FFmpeg Command for ${resolution}:`, command);
+      await executeCommand(command.trim(), bitrate);
     }
   }
 }
